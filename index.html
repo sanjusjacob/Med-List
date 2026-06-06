@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan of Care - Medication List</title>
+    <style>
+        :root {
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-main: #1a202c;
+            --text-muted: #4a5568;
+            --border-color: #cbd5e0;
+            --accent: #2b6cb0;
+            --danger: #e53e3e;
+            --success: #2f855a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 412px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 12px;
+        }
+
+        header {
+            border-bottom: 2px solid var(--text-main);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-top: 4px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .meta-info span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* 3-Column List Format */
+        .care-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .care-list th {
+            text-align: left;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+
+        .care-list td {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+            font-size: 0.8rem;
+        }
+
+        .med-name {
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.2;
+            padding-right: 4px;
+        }
+
+        .supply-text {
+            font-weight: 600;
+            color: #2d3748;
+            background-color: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .schedule-text {
+            font-weight: 700;
+            color: var(--accent);
+            text-align: right;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+            font-size: 0.85rem;
+        }
+
+        /* Footer Menu Actions Layout */
+        .actions-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        button {
+            padding: 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #edf2f7;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        /* Unified Gateway & Editor Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            width: 100%;
+            max-width: 380px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .pin-gate-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.25rem;
+            text-align: center;
+            letter-spacing: 6px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            margin: 10px 0;
+            outline: none;
+        }
+
+        .pin-gate-input:focus {
+            border-color: var(--accent);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 4px;
+            height: 18px;
+        }
+
+        .edit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+
+        .edit-table td {
+            padding: 6px 4px;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 0.75rem;
+        }
+
+        .inline-del-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        /* SCREENSHOT MODE OVERRIDES */
+        body.screenshot-mode {
+            background: #ffffff;
+            padding: 0;
+        }
+
+        body.screenshot-mode .app-container {
+            box-shadow: none;
+            border: none;
+            padding: 4px;
+        }
+
+        body.screenshot-mode .actions-footer {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header>
+            <h1>Plan of Care (15 Days)</h1>
+            <div class="meta-info">
+                <div>Dr: <span id="lblDoc">Dr. Neurologist</span></div>
+                <div>Updated: <span id="lblDate">2026-06-05</span></div>
+            </div>
+        </header>
+
+        <main>
+            <table class="care-list">
+                <thead>
+                    <tr>
+                        <th style="width: 55%;">Medicine</th>
+                        <th style="width: 20%;">Supply</th>
+                        <th style="width: 25%; text-align: right;">Schedule</th>
+                    </tr>
+                </thead>
+                <tbody id="careListBody">
+                </tbody>
+            </table>
+        </main>
+
+        <footer class="actions-footer">
+            <button onclick="requestEditAccess()">✏️ Edit / Manage List</button>
+            <button class="btn-primary" onclick="enterScreenshotMode()">📸 Clean View</button>
+        </footer>
+
+    </div>
+
+    <div class="modal" id="securityModal">
+        <div class="modal-content" style="max-width: 320px; text-align: center; padding: 20px 14px;">
+            <div style="font-size: 2.5rem; margin-bottom: 6px;">🔒</div>
+            <h3 style="font-size: 1rem; margin-bottom: 4px;">Security Code Required</h3>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Enter security PIN to edit this care plan.</p>
+            
+            <input type="password" id="pinGateInput" class="pin-gate-input" maxlength="4" placeholder="••••" inputmode="numeric" onkeyup="checkPinEntry(event)">
+            
+            <div class="error-message" id="gateErrorMsg"></div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+                <button onclick="closeSecurityGate()">Cancel</button>
+                <button class="btn-primary" onclick="verifyGatePin()">Verify Code</button>
+            </div>
+            <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 6px;">
+                Default Passcode: <strong>1234</strong>
+            </p>
+        </div>
+    </div>
+
+    <div class="modal" id="setupModal">
+        <div class="modal-content">
+            <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--accent);">🔑 Security Settings</h3>
+            <div class="form-group">
+                <label>Change Security Passcode (4 Digits)</label>
+                <input type="password" id="formPin" value="1234" maxlength="4" style="letter-spacing: 2px; font-weight: bold;">
+            </div>
+
+            <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--accent);">📋 Header Information</h3>
+            <div class="form-group">
+                <label>Doctor's Name</label>
+                <input type="text" id="formDoc" value="Dr. Neurologist">
+            </div>
+            <div class="form-group">
+                <label>Last Updated</label>
+                <input type="date" id="formDate" value="2026-06-05">
+            </div>
+
+            <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size: 0.9rem; margin-bottom: 6px; color: var(--danger);">🗑️ Remove Medicines</h3>
+            <div style="max-height: 110px; overflow-y: auto; border: 1px solid #edf2f7; border-radius: 4px; padding: 4px; margin-bottom: 12px;">
+                <table class="edit-table">
+                    <tbody id="modalEditList">
+                    </tbody>
+                </table>
+            </div>
+
+            <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size: 0.9rem; margin-bottom: 6px; color: var(--success);">➕ Add New Medicine</h3>
+            
+            <div class="form-group">
+                <label>Medicine Name</label>
+                <input type="text" id="addName" placeholder="e.g., Syndopa Plus">
+            </div>
+            <div class="form-group">
+                <label>Supply Required</label>
+                <input type="text" id="addQty" placeholder="e.g., 60 tabs">
+            </div>
+            <div class="form-group">
+                <label>Schedule Pattern / Text</label>
+                <input type="text" id="addSched" placeholder="e.g., 1-1-1-1 or 15 ml daily">
+            </div>
+            <button class="btn-primary" style="width: 100%; padding: 8px; margin-top: 4px; font-size: 0.8rem; background: var(--success);" onclick="addItem()">Add to List</button>
+
+            <hr style="margin: 16px 0; border: 0; border-top: 1px solid var(--border-color);">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn-primary" style="width: 100%; padding: 10px; background: var(--accent);" onclick="saveAllChanges()">💾 Save & Close Editor</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // EDIT HERE IF YOU WANT TO CHANGE THE DEFAULT BASELINE LIST FOR EVERY VISITOR:
+        const defaultPlan = [
+            { name: "Clopidogrel + Atorvastatin", qty: "15 tabs", sched: "0-1-0" },
+            { name: "Carbidopa + Levodopa (Syndopa Plus)", qty: "60 tabs", sched: "1-1-1-1" },
+            { name: "Safinamide 50 mg", qty: "15 tabs", sched: "1-0-0" },
+            { name: "Torsemide 5 mg", qty: "15 tabs", sched: "1-0-0" },
+            { name: "Tamsulosin + Dutasteride", qty: "15 tabs", sched: "0-0-1" },
+            { name: "Pregabalin + Methylcobalamin", qty: "15 tabs", sched: "0-0-1" },
+            { name: "Pregabalin 75 mg", qty: "15 tabs", sched: "1-0-0" },
+            { name: "Shelcal", qty: "15 tabs", sched: "0-1-0" },
+            { name: "Myocatch", qty: "15 tabs", sched: "0-1-0" },
+            { name: "Mirabegron 25 mg", qty: "15 tabs", sched: "0-0-1" },
+            { name: "Lactulose Syrup", qty: "225 ml", sched: "15 ml daily" },
+            { name: "Zolpidem 5 mg", qty: "15 tabs", sched: "0-0-1" }
+        ];
+
+        // Manage states via storage contexts
+        let carePlan = JSON.parse(localStorage.getItem('carePlan')) || defaultPlan;
+        let securePin = localStorage.getItem('securePin') || "1234";
+        let doctorName = localStorage.getItem('doctorName') || "Dr. Neurologist";
+        let lastUpdated = localStorage.getItem('lastUpdated') || "2026-06-05";
+
+        // Bind data parameters instantly onto dashboard elements
+        document.getElementById('formDoc').value = doctorName;
+        document.getElementById('formDate').value = lastUpdated;
+        document.getElementById('formPin').value = securePin;
+        document.getElementById('lblDoc').innerText = doctorName;
+        document.getElementById('lblDate').innerText = lastUpdated;
+
+        function requestEditAccess() {
+            document.getElementById('gateErrorMsg').innerText = "";
+            document.getElementById('pinGateInput').value = "";
+            document.getElementById('securityModal').style.display = "flex";
+            document.getElementById('pinGateInput').focus();
+        }
+
+        function closeSecurityGate() {
+            document.getElementById('securityModal').style.display = "none";
+        }
+
+        function checkPinEntry(event) {
+            const val = document.getElementById('pinGateInput').value;
+            if (val.length === 4 || event.key === "Enter") {
+                verifyGatePin();
+            }
+        }
+
+        function verifyGatePin() {
+            const inputVal = document.getElementById('pinGateInput').value;
+            const errorElement = document.getElementById('gateErrorMsg');
+
+            if (inputVal === securePin) {
+                errorElement.innerText = "";
+                closeSecurityGate();
+                openEditorDashboard();
+            } else {
+                errorElement.innerText = "❌ Code Incorrect. Access Denied.";
+                document.getElementById('pinGateInput').value = "";
+                document.getElementById('pinGateInput').focus();
+            }
+        }
+
+        function openEditorDashboard() {
+            renderModalEditPlan();
+            document.getElementById('setupModal').style.display = 'flex';
+        }
+
+        function closeEditorDashboard() {
+            document.getElementById('setupModal').style.display = 'none';
+        }
+
+        function renderMainPlan() {
+            const tbody = document.getElementById('careListBody');
+            tbody.innerHTML = '';
+
+            carePlan.forEach((item) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="med-name">${item.name}</span></td>
+                    <td><span class="supply-text">${item.qty}</span></td>
+                    <td class="schedule-text">${item.sched}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderModalEditPlan() {
+            const tbody = document.getElementById('modalEditList');
+            tbody.innerHTML = '';
+
+            carePlan.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="width: 10%; text-align: center;">
+                        <button class="inline-del-btn" onclick="deleteItem(${index})">⛔</button>
+                    </td>
+                    <td style="width: 60%; font-weight: 600;">${item.name}</td>
+                    <td style="width: 30%; text-align: right; color: var(--text-muted);">${item.sched}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function saveAllChanges() {
+            const inputPin = document.getElementById('formPin').value;
+            if(inputPin.length < 4) {
+                alert("Security Code must be exactly 4 digits.");
+                return;
+            }
+            
+            securePin = inputPin; 
+            doctorName = document.getElementById('formDoc').value;
+            lastUpdated = document.getElementById('formDate').value;
+            
+            localStorage.setItem('carePlan', JSON.stringify(carePlan));
+            localStorage.setItem('securePin', securePin);
+            localStorage.setItem('doctorName', doctorName);
+            localStorage.setItem('lastUpdated', lastUpdated);
+
+            document.getElementById('lblDoc').innerText = doctorName;
+            document.getElementById('lblDate').innerText = lastUpdated;
+            
+            renderMainPlan();
+            closeEditorDashboard();
+        }
+
+        function addItem() {
+            const name = document.getElementById('addName').value;
+            const qty = document.getElementById('addQty').value || "15 tabs";
+            const sched = document.getElementById('addSched').value;
+
+            if(!name || !sched) return alert("Please complete Name and Schedule fields.");
+
+            carePlan.push({ name, qty, sched });
+            
+            document.getElementById('addName').value = '';
+            document.getElementById('addQty').value = '';
+            document.getElementById('addSched').value = '';
+            
+            renderModalEditPlan();
+        }
+
+        function deleteItem(index) {
+            carePlan.splice(index, 1);
+            renderModalEditPlan();
+        }
+
+        function enterScreenshotMode() {
+            document.body.classList.add('screenshot-mode');
+            setTimeout(() => {
+                window.addEventListener('click', exitScreenshotMode, { once: true });
+            }, 300);
+        }
+
+        function exitScreenshotMode() {
+            document.body.classList.remove('screenshot-mode');
+            renderMainPlan();
+        }
+
+        renderMainPlan();
+    </script>
+</body>
+</html>
